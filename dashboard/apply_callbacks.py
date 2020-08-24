@@ -11,6 +11,7 @@ import time
 class ClickMonitor():
     def __init__(self):
         self.reset_clicks = 0
+        self.click_data = ''
 
 
 click_monitor = ClickMonitor()
@@ -80,15 +81,19 @@ def apply_callback(session):
         #[State("lock_selector", "value"), State("main_graph", "relayoutData")],
     )
     def display_main(url, click_data, reset_button):
-        reset_pressed = False
+        if click_data:
+            try:
+                bridge_name = click_data['points'][0]['text']
+            except KeyError:
+                return EMPTY_PLOT
+            if bridge_name != click_monitor.click_data:
+                click_monitor.click_data = bridge_name
+                return geo_located_bridge_sensor(session, bridge_name=bridge_name)
         if reset_button:
             if reset_button > click_monitor.reset_clicks:
                 reset_pressed = True
                 click_monitor.reset_clicks = reset_button
                 return geo_located_bridges(session)
-        if click_data:
-            bridge_name = click_data['points'][0]['text']
-            return geo_located_bridge_sensor(session, bridge_name=bridge_name)
         else:
             return geo_located_bridges(session)
 
@@ -100,19 +105,21 @@ def apply_callback(session):
     )
     def get_individual_figure(click_data, reset_button):
         #ctx = dash.callback_context
-        if reset_button:
-            if reset_button > click_monitor_2.reset_clicks:
-                click_monitor_2.reset_clicks = reset_button
-                return EMPTY_PLOT
         if click_data:
             try:
                 bridge_name = click_data['points'][0]['text']
             except KeyError:
-                print(click_data)
-            #time.sleep(2)
-            fig = individual_trace(session, bridge_name=bridge_name, measurement=['Gage height, ft'])
-            output_dict = fig.to_dict()
-            return dict(data=output_dict['data'], layout=output_dict['layout'])
+                return EMPTY_PLOT
+            if bridge_name != click_monitor_2.click_data:
+                click_monitor_2.click_data = bridge_name
+                #time.sleep(2)
+                fig = individual_trace(session, bridge_name=bridge_name, measurement=['Gage height, ft'])
+                output_dict = fig.to_dict()
+                return dict(data=output_dict['data'], layout=output_dict['layout'])
+        if reset_button:
+            if reset_button > click_monitor_2.reset_clicks:
+                click_monitor_2.reset_clicks = reset_button
+                return EMPTY_PLOT
         else:
             return EMPTY_PLOT
 
@@ -125,15 +132,18 @@ def apply_callback(session):
     )
     def update_weather(click_data, reset_button):
         #ctx = dash.callback_context
+        if click_data:
+            try:
+                bridge_name = click_data['points'][0]['text']
+            except KeyError:
+                return EMPTY_PLOT
+            if bridge_name != click_monitor_3.click_data:
+                click_monitor_3.click_data = bridge_name
+                return individual_weather(session, bridge_name=bridge_name)
         if reset_button:
             if reset_button > click_monitor_3.reset_clicks:
                 click_monitor_3.reset_clicks = reset_button
                 return EMPTY_PLOT
-        if click_data:
-            bridge_name = click_data['points'][0]['text']
-            #time.sleep(2)
-            return individual_weather(session, bridge_name=bridge_name)
-
         else:
             return EMPTY_PLOT
 
