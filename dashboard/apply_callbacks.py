@@ -113,6 +113,7 @@ def apply_callback(session):
         else:
             return EMPTY_PLOT
 
+
     @app.callback(
         Output("precipitation_forecast", "figure"),
         [Input("main_graph", "clickData"),
