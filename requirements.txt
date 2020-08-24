@@ -1,0 +1,10 @@
+sqlalchemy
+sqlalchemy-utils
+pandas
+dash
+dash-bootstrap-components
+pyodbc
+xlrd
+requests
+plotly
+alembic
