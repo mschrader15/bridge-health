@@ -105,7 +105,10 @@ def apply_callback(session):
                 click_monitor_2.reset_clicks = reset_button
                 return EMPTY_PLOT
         if click_data:
-            bridge_name = click_data['points'][0]['text']
+            try:
+                bridge_name = click_data['points'][0]['text']
+            except KeyError:
+                print(click_data)
             #time.sleep(2)
             fig = individual_trace(session, bridge_name=bridge_name, measurement=['Gage height, ft'])
             output_dict = fig.to_dict()
