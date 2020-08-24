@@ -2,8 +2,9 @@ import urllib
 from sqlalchemy_utils import database_exists
 from sqlalchemy import Column, Integer, String, DECIMAL, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy import ForeignKey, create_engine
+from contextlib import contextmanager
 
 Base = declarative_base()
 
@@ -101,13 +102,26 @@ def _get_engine(config, update_structure):
 
 
 def _create_session(engine):
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    return Session()
+    Session = sessionmaker(bind=engine)
+    return Session
 
 
 def get_session(config, update_structure):
     return _create_session(_get_engine(config, update_structure))
+
+@contextmanager
+def session_scope(config, update_structure):
+    """Provide a transactional scope around a series of operations."""
+    Session = scoped_session(get_session(config, update_structure))
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def get_bridges_to_plot(session):

@@ -3,7 +3,7 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
 from index import app
-from dashboard.plots import geo_located_bridges, individual_trace, get_bridges_status_plot, geo_located_bridge_sensor,\
+from dashboard.plots import geo_located_bridges, individual_trace, get_bridges_status_plot, geo_located_bridge_sensor, \
     individual_weather
 import time
 
@@ -16,53 +16,65 @@ class ClickMonitor():
 
 click_monitor = ClickMonitor()
 click_monitor_2 = ClickMonitor()
-click_monitor_3 = ClickMonitor()
+# click_monitor_3 = ClickMonitor()
 
 
 EMPTY_PLOT = {
-                "layout": {
-                    "xaxis": {
-                        "visible": False
-                    },
-                    "yaxis": {
-                        "visible": False
-                    },
-                    "annotations": [
-                        {
-                            "text": "Select a bridge on the bridge overview plot",
-                            "xref": "paper",
-                            "yref": "paper",
-                            "showarrow": False,
-                            "font": {
-                                "size": 20
-                            }
-                        }
-                    ]
+    "layout": {
+        "xaxis": {
+            "visible": False
+        },
+        "yaxis": {
+            "visible": False
+        },
+        "annotations": [
+            {
+                "text": "Select a bridge on the bridge overview plot",
+                "xref": "paper",
+                "yref": "paper",
+                "showarrow": False,
+                "font": {
+                    "size": 20
                 }
             }
+        ]
+    }
+}
 
 LOADING_PLOT = {
-                "layout": {
-                    "xaxis": {
-                        "visible": False
-                    },
-                    "yaxis": {
-                        "visible": False
-                    },
-                    "annotations": [
-                        {
-                            "text": "Plot is loading ...",
-                            "xref": "paper",
-                            "yref": "paper",
-                            "showarrow": False,
-                            "font": {
-                                "size": 20
-                            }
-                        }
-                    ]
+    "layout": {
+        "xaxis": {
+            "visible": False
+        },
+        "yaxis": {
+            "visible": False
+        },
+        "annotations": [
+            {
+                "text": "Plot is loading ...",
+                "xref": "paper",
+                "yref": "paper",
+                "showarrow": False,
+                "font": {
+                    "size": 20
                 }
             }
+        ]
+    }
+}
 
+
+def interpret_user_inputs(click_data, reset_button):
+    bridge_name = ''
+    n_clicks = 0
+    if click_data:
+        try:
+            bridge_name = click_data['points'][0]['text']
+        except KeyError:
+            bridge_name = ''
+    if reset_button:
+        n_clicks = reset_button
+    return bridge_name, n_clicks
 
 
 def apply_callback(session):
@@ -73,83 +85,141 @@ def apply_callback(session):
         [Input("main_graph", "figure")],
     )
 
+    # @app.callback(Output('call-back-1-store', 'children'),
+    #               [Input("main_graph", "clickData"),
+    #                Input('reset_button', 'n_clicks')]
+    #               )
+    # def store_clicks_1(click_data, reset_button):
+    #     bridge_name = ''
+    #     n_clicks = 0
+    #     if click_data:
+    #         try:
+    #             bridge_name = click_data['points'][0]['text']
+    #         except KeyError:
+    #             bridge_name = ''
+    #     if reset_button:
+    #         n_clicks = reset_button
+    #     return html.P("-".join([bridge_name, str(n_clicks)]))
+    #
+    # @app.callback(Output('call-back-2-store', 'children'),
+    #               [Input("main_graph", "clickData"),
+    #                Input('reset_button', 'n_clicks')]
+    #               )
+    # def store_clicks_2(click_data, reset_button):
+    #     bridge_name = ''
+    #     n_clicks = 0
+    #     if click_data:
+    #         try:
+    #             bridge_name = click_data['points'][0]['text']
+    #         except KeyError:
+    #             bridge_name = ''
+    #     if reset_button:
+    #         n_clicks = reset_button
+    #     return html.P("-".join([bridge_name, str(n_clicks)]))
+
+    # @app.callback(
+    #               [Input("main_graph", "clickData"),
+    #                Input('reset_button', 'n_clicks')]
+    #               )
+    # def store_clicks_3(click_data, reset_button):
+    #     bridge_name = ''
+    #     n_clicks = 0
+    #     if click_data:
+    #         try:
+    #             bridge_name = click_data['points'][0]['text']
+    #         except KeyError:
+    #             bridge_name = ''
+    #     if reset_button:
+    #         n_clicks = reset_button
+    #     return html.P("-".join([bridge_name, str(n_clicks)]))
+
     @app.callback(
-        Output("main_graph", "figure"),
+        [Output("main_graph", "figure"),
+         Output('call-back-1-store', 'children')],
         [Input("url", "pathname"),
          Input("main_graph", "clickData"),
          Input('reset_button', 'n_clicks')],
-        #[State("lock_selector", "value"), State("main_graph", "relayoutData")],
+        [State('call-back-1-store', 'children')]
     )
-    def display_main(url, click_data, reset_button):
+    def display_main(url, click_data, reset_button, stored_states):
+        bridge_name, n_clicks = interpret_user_inputs(click_data=click_data, reset_button=reset_button)
+        try:
+            data = stored_states['props']['children'].split('-')
+        except (AttributeError, TypeError):
+            data = ["", 0]
+        last_bridge_name = data[0]
+        last_n_clicks = int(data[1])
         if click_data:
-            try:
-                bridge_name = click_data['points'][0]['text']
-            except KeyError:
-                return EMPTY_PLOT
-            if bridge_name != click_monitor.click_data:
-                click_monitor.click_data = bridge_name
-                return geo_located_bridge_sensor(session, bridge_name=bridge_name)
+            if bridge_name != last_bridge_name:
+                return geo_located_bridge_sensor(session, bridge_name=bridge_name), html.P("-".join([bridge_name, str(n_clicks)]))
         if reset_button:
             if reset_button > click_monitor.reset_clicks:
-                reset_pressed = True
                 click_monitor.reset_clicks = reset_button
-                return geo_located_bridges(session)
-        else:
-            return geo_located_bridges(session)
+                return geo_located_bridges(session), html.P("-".join([last_bridge_name, str(n_clicks)]))
+        return geo_located_bridges(session), html.P("-".join([last_bridge_name, str(last_n_clicks)]))
 
     @app.callback(
-        Output("water_services", "figure"),
+        [Output("water_services", "figure"),
+         Output('call-back-2-store', 'children')],
         [Input("main_graph", "clickData"),
-         Input('reset_button', 'n_clicks')
-         ],
+         Input('reset_button', 'n_clicks')],
+        [State('call-back-2-store', 'children')]
     )
-    def get_individual_figure(click_data, reset_button):
-        #ctx = dash.callback_context
+    def get_individual_figure(click_data, reset_button, stored_states):
+        bridge_name, n_clicks = interpret_user_inputs(click_data=click_data, reset_button=reset_button)
+        try:
+            data = stored_states['props']['children'].split('-')
+        except (AttributeError, TypeError):
+            data = ["", 0]
+        last_bridge_name = data[0]
+        last_n_clicks = int(data[1])
         if click_data:
             try:
                 bridge_name = click_data['points'][0]['text']
             except KeyError:
-                return EMPTY_PLOT
-            if bridge_name != click_monitor_2.click_data:
-                click_monitor_2.click_data = bridge_name
-                #time.sleep(2)
+                return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(last_n_clicks)]))
+            if bridge_name != last_bridge_name:
                 fig = individual_trace(session, bridge_name=bridge_name, measurement=['Gage height, ft'])
                 output_dict = fig.to_dict()
-                return dict(data=output_dict['data'], layout=output_dict['layout'])
+                return dict(data=output_dict['data'], layout=output_dict['layout']), html.P(
+                    "-".join([bridge_name, str(n_clicks)]))
         if reset_button:
-            if reset_button > click_monitor_2.reset_clicks:
-                click_monitor_2.reset_clicks = reset_button
-                return EMPTY_PLOT
+            if n_clicks > last_n_clicks:
+                return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(reset_button)]))
         else:
-            return EMPTY_PLOT
+            return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(last_n_clicks)]))
 
-
-    @app.callback(
-        Output("precipitation_forecast", "figure"),
-        [Input("main_graph", "clickData"),
-         Input('reset_button', 'n_clicks')
-         ],
-    )
-    def update_weather(click_data, reset_button):
-        #ctx = dash.callback_context
+    @app.callback([Output("precipitation_forecast", "figure"),
+                   Output('call-back-3-store', 'children')],
+                  [Input("main_graph", "clickData"),
+                   Input('reset_button', 'n_clicks'), ],
+                  [State('call-back-3-store', 'children')]
+                  )
+    def update_weather(click_data, reset_button, stored_states):
+        bridge_name, n_clicks = interpret_user_inputs(click_data=click_data, reset_button=reset_button)
+        try:
+            data = stored_states['props']['children'].split('-')
+        except (AttributeError, TypeError):
+            data = ["", 0]
+        last_bridge_name = data[0]
+        last_n_clicks = int(data[1])
         if click_data:
             try:
                 bridge_name = click_data['points'][0]['text']
             except KeyError:
-                return EMPTY_PLOT
-            if bridge_name != click_monitor_3.click_data:
-                click_monitor_3.click_data = bridge_name
-                return individual_weather(session, bridge_name=bridge_name)
+                return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(last_n_clicks)]))
+            if bridge_name != last_bridge_name:
+                return individual_weather(session, bridge_name=bridge_name), html.P(
+                    "-".join([bridge_name, str(n_clicks)]))
         if reset_button:
-            if reset_button > click_monitor_3.reset_clicks:
-                click_monitor_3.reset_clicks = reset_button
-                return EMPTY_PLOT
+            if n_clicks > last_n_clicks:
+                return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(reset_button)]))
         else:
-            return EMPTY_PLOT
+            return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(last_n_clicks)]))
 
     @app.callback(
         Output("bridge-status", "figure"),
-        [Input("url", "pathname"),]
+        [Input("url", "pathname"), ]
     )
     def update_status(url):
         if url:

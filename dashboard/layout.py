@@ -5,6 +5,9 @@ from index import app
 LAYOUT = html.Div([dcc.Location(id="url")] +
                   [
                       dcc.Store(id="aggregate_data"),
+                      html.Div(id='call-back-1-store', style={'display': 'none'}),
+                      html.Div(id='call-back-2-store', style={'display': 'none'}),
+                      html.Div(id='call-back-3-store', style={'display': 'none'}),
                       # empty Div to trigger javascript file for graph resizing
                       html.Div(id="output-clientside"),
                       html.Div(
