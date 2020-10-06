@@ -1,5 +1,5 @@
-from index import config, app
-from db.model import session_scope
+from index import config, app, Paths
+from db.model import session_scope, BridgeOverride
 from dashboard.layout import LAYOUT
 from dashboard.apply_callbacks import apply_callback
 
@@ -7,10 +7,12 @@ from dashboard.apply_callbacks import apply_callback
 # if not SESSION:
 #     SESSION = get_session(config, update_structure=False)
 
-with session_scope(config=config, update_structure=False) as SESSION:
-    apply_callback(SESSION)
-    app.layout = LAYOUT
-    server = app.server
+# with session_scope(config=config, update_structure=False) as SESSION:
+SESSION = BridgeOverride(Paths.BRIDGE_EXCEL)
+apply_callback(SESSION)
+app.layout = LAYOUT
+server = app.server
+
 
 if __name__ == "__main__":
 

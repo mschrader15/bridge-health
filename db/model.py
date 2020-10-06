@@ -77,6 +77,7 @@ class WeatherData(Base):
 
 
 def _generate_engine(config):
+
     params = urllib.parse.quote_plus("DRIVER={ODBC Driver 17 for SQL Server};"
                                      f"SERVER={config.SERVER_NAME};"
                                      f"DATABASE={config.DATABASE_NAME};"
@@ -139,3 +140,57 @@ def get_bridges_to_plot(session):
 
 def get_matching_bridge(session, bridge_name):
     return session.query(Bridge).filter(Bridge.name == bridge_name).first()
+
+
+def get_simplified_data(excel_file):
+    import pandas as pd
+    df = pd.read_excel(excel_file)
+    return df
+
+
+class BridgeOverride:
+
+    def __int__(self, excel_file):
+        import pandas as pd
+        self.df = pd.read_excel(excel_file)
+
+    def get_bridges_to_plot(self,):
+        lat = []
+        lon = []
+        text = []
+        status = []
+        for bridge in self.df.itterrows():
+            lat.append(str(float(bridge.Lat)))
+            lon.append(str(float(bridge.Lon)))
+            text.append(bridge.Bridge_Name)
+            status.append(bridge.Assessed_Prognosis)
+        return lat, lon, text, status
+
+    def get_matching_bridge(self, bridge_name):
+        local_df = self.df.loc[self.df.Bridge_Name == bridge_name]
+        lat = str(float(local_df.Lat.values))
+        lon = str(float(local_df.Lon.values))
+        name = local_df.Bridge_Name
+        status = local_df.Assessed_Prognosis
+        hydro_code = local_df.Water_Site_number.strip().split(',')
+        hydro_lat = local_df.Water_Site_Lat.strip().split(',')
+        hydro_lon = local_df.Water_Site_Lon.strip().split(',')
+        return PsuedoBridge(lat, lon, status, name, hydro_lat, hydro_lon, hydro_code)
+
+
+class PsuedoBridge:
+    def __int__(self, lat, lon, prognosis, name, hydro_lats, hydro_lons, hydro_codes):
+        self.latitude = lat
+        self.longitude = lon
+        self.assesed_prognosis = prognosis
+        self.name = name
+        self.hydro_locations = [PsuedoHydroLocation(item[0], item[1], item[2]) for item in zip(hydro_lats,
+                                                                                               hydro_lons,
+                                                                                               hydro_codes)]
+
+
+class PsuedoHydroLocation:
+    def __int__(self, lat, lon, code):
+        self.latitude = lat
+        self.longitude = lon
+        self.code = code

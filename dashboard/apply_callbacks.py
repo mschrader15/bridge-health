@@ -1,11 +1,8 @@
-import dash
 from dash.dependencies import Input, Output, State, ClientsideFunction
-import dash_core_components as dcc
 import dash_html_components as html
 from index import app
 from dashboard.plots import geo_located_bridges, individual_trace, get_bridges_status_plot, geo_located_bridge_sensor, \
-    individual_weather
-import time
+    individual_weather, geo_located_bridges_excel, geo_located_bridge_sensor_excel
 
 
 class ClickMonitor():
@@ -85,54 +82,6 @@ def apply_callback(session):
         [Input("main_graph", "figure")],
     )
 
-    # @app.callback(Output('call-back-1-store', 'children'),
-    #               [Input("main_graph", "clickData"),
-    #                Input('reset_button', 'n_clicks')]
-    #               )
-    # def store_clicks_1(click_data, reset_button):
-    #     bridge_name = ''
-    #     n_clicks = 0
-    #     if click_data:
-    #         try:
-    #             bridge_name = click_data['points'][0]['text']
-    #         except KeyError:
-    #             bridge_name = ''
-    #     if reset_button:
-    #         n_clicks = reset_button
-    #     return html.P("-".join([bridge_name, str(n_clicks)]))
-    #
-    # @app.callback(Output('call-back-2-store', 'children'),
-    #               [Input("main_graph", "clickData"),
-    #                Input('reset_button', 'n_clicks')]
-    #               )
-    # def store_clicks_2(click_data, reset_button):
-    #     bridge_name = ''
-    #     n_clicks = 0
-    #     if click_data:
-    #         try:
-    #             bridge_name = click_data['points'][0]['text']
-    #         except KeyError:
-    #             bridge_name = ''
-    #     if reset_button:
-    #         n_clicks = reset_button
-    #     return html.P("-".join([bridge_name, str(n_clicks)]))
-
-    # @app.callback(
-    #               [Input("main_graph", "clickData"),
-    #                Input('reset_button', 'n_clicks')]
-    #               )
-    # def store_clicks_3(click_data, reset_button):
-    #     bridge_name = ''
-    #     n_clicks = 0
-    #     if click_data:
-    #         try:
-    #             bridge_name = click_data['points'][0]['text']
-    #         except KeyError:
-    #             bridge_name = ''
-    #     if reset_button:
-    #         n_clicks = reset_button
-    #     return html.P("-".join([bridge_name, str(n_clicks)]))
-
     @app.callback(
         [Output("main_graph", "figure"),
          Output('call-back-1-store', 'children')],
@@ -151,12 +100,12 @@ def apply_callback(session):
         last_n_clicks = int(data[1])
         if click_data:
             if bridge_name != last_bridge_name:
-                return geo_located_bridge_sensor(session, bridge_name=bridge_name), html.P("-".join([bridge_name, str(n_clicks)]))
+                return geo_located_bridge_sensor_excel(session, bridge_name=bridge_name), html.P("-".join([bridge_name, str(n_clicks)]))
         if reset_button:
             if reset_button > click_monitor.reset_clicks:
                 click_monitor.reset_clicks = reset_button
-                return geo_located_bridges(session), html.P("-".join([last_bridge_name, str(n_clicks)]))
-        return geo_located_bridges(session), html.P("-".join([last_bridge_name, str(last_n_clicks)]))
+                return geo_located_bridges_excel(session), html.P("-".join([last_bridge_name, str(n_clicks)]))
+        return geo_located_bridges_excel(session), html.P("-".join([last_bridge_name, str(last_n_clicks)]))
 
     @app.callback(
         [Output("water_services", "figure"),
