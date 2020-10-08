@@ -83,6 +83,24 @@ def add_hydro_locations(bridge_df, session):
     session.commit()
 
 
+def add_hydro_locations_excel(bridge_df):
+
+    local_df = bridge_df.set_index('Bridge_Name')
+
+    for bridge in local_df.index.values:
+        hydro_sensors = local_df.loc[bridge, 'Water_Site_Number'].split(',')
+        hydro_sensors = [sensor.strip() for sensor in hydro_sensors]
+        lat_list = []
+        lon_list = []
+        for sensor in hydro_sensors:
+            lat, lon = get_lat_lon(sensor)
+            lat_list.append(str(lat))
+            lon_list.append(str(lon))
+        local_df.loc[bridge, 'Water_Site_Lat'] = ",".join(lat_list)
+        local_df.loc[bridge, 'Water_Site_Lon'] = ",".join(lon_list)
+    local_df.reset_index(inplace=True)
+    return local_df
+
 # def add_weather_locations(bridge_df, session):
 #
 #     local_df = bridge_df.set_index('Bridge_Name')
@@ -95,10 +113,11 @@ if __name__ == "__main__":
 
     bridge_file = paths.BRIDGE_EXCEL
     bridge_df = pd.read_excel(bridge_file, dtype={'Water_Site_Number': str})
-
-    session = get_session(config, update_structure)
-
-    add_bridges(bridge_df, session)
-    add_hydro_locations(bridge_df, session)
+    updated_df = add_hydro_locations_excel(bridge_df)
+    updated_df.to_excel(bridge_file)
+    # session = get_session(config, update_structure)
+    #
+    # add_bridges(bridge_df, session)
+    # add_hydro_locations(bridge_df, session)
 
 

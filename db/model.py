@@ -148,38 +148,16 @@ def get_simplified_data(excel_file):
     return df
 
 
-class BridgeOverride:
+class PsuedoHydroLocation:
+    def __init__(self, lat, lon, code):
+        self.latitude = lat
+        self.longitude = lon
+        self.code = code
 
-    def __int__(self, excel_file):
-        import pandas as pd
-        self.df = pd.read_excel(excel_file)
-
-    def get_bridges_to_plot(self,):
-        lat = []
-        lon = []
-        text = []
-        status = []
-        for bridge in self.df.itterrows():
-            lat.append(str(float(bridge.Lat)))
-            lon.append(str(float(bridge.Lon)))
-            text.append(bridge.Bridge_Name)
-            status.append(bridge.Assessed_Prognosis)
-        return lat, lon, text, status
-
-    def get_matching_bridge(self, bridge_name):
-        local_df = self.df.loc[self.df.Bridge_Name == bridge_name]
-        lat = str(float(local_df.Lat.values))
-        lon = str(float(local_df.Lon.values))
-        name = local_df.Bridge_Name
-        status = local_df.Assessed_Prognosis
-        hydro_code = local_df.Water_Site_number.strip().split(',')
-        hydro_lat = local_df.Water_Site_Lat.strip().split(',')
-        hydro_lon = local_df.Water_Site_Lon.strip().split(',')
-        return PsuedoBridge(lat, lon, status, name, hydro_lat, hydro_lon, hydro_code)
 
 
 class PsuedoBridge:
-    def __int__(self, lat, lon, prognosis, name, hydro_lats, hydro_lons, hydro_codes):
+    def __init__(self, lat, lon, prognosis, name, hydro_lats, hydro_lons, hydro_codes):
         self.latitude = lat
         self.longitude = lon
         self.assesed_prognosis = prognosis
@@ -189,8 +167,34 @@ class PsuedoBridge:
                                                                                                hydro_codes)]
 
 
-class PsuedoHydroLocation:
-    def __int__(self, lat, lon, code):
-        self.latitude = lat
-        self.longitude = lon
-        self.code = code
+class BridgeOverride:
+
+    def __init__(self, excel_file):
+        import pandas as pd
+        self.df = pd.read_excel(excel_file)
+
+    def get_bridges_to_plot(self,):
+        lat = []
+        lon = []
+        text = []
+        status = []
+        for bridge in self.df.iterrows():
+            lat.append(str(float(bridge[1].Lat)))
+            lon.append(str(float(bridge[1].Lon)))
+            text.append(bridge[1].Bridge_Name)
+            status.append(bridge[1].Assessed_Prognosis)
+        return lat, lon, text, status
+
+    def get_matching_bridge(self, bridge_name):
+        local_df = self.df.loc[self.df.Bridge_Name == bridge_name]
+        lat = str(float(local_df.Lat.values[0]))
+        lon = str(float(local_df.Lon.values[0]))
+        name = local_df.Bridge_Name
+        status = local_df.Assessed_Prognosis.values[0]
+        hydro_code = local_df.Water_Site_Number.values[0].split(',')
+        hydro_lat = local_df.Water_Site_Lat.values[0].split(',')
+        hydro_lon = local_df.Water_Site_Lon.values[0].split(',')
+        hydro_code = [code.strip() for code in hydro_code]
+        hydro_lat = [_lat.strip() for _lat in hydro_lat]
+        hydro_lon = [_lon.strip() for _lon in hydro_lon]
+        return PsuedoBridge(lat, lon, status, name, hydro_lat, hydro_lon, hydro_code)

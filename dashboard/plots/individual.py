@@ -85,7 +85,7 @@ def individual_weather(session, bridge_name):
     return fig
 
 def individual_trace_excel(session, bridge_name, measurement):
-    bridge = get_matching_bridge(session, bridge_name)
+    bridge = session.get_matching_bridge(bridge_name)
     locations = bridge.hydro_locations
     plot_data = []
     site_codes = [location.code for location in locations]
@@ -114,28 +114,50 @@ def individual_trace_excel(session, bridge_name, measurement):
 
 
 def individual_weather_excel(session, bridge_name):
-    bridge = get_matching_bridge(session, bridge_name)
+    bridge = session.get_matching_bridge(bridge_name)
     hour_time, day_time, hour_rain, day_rain = get_future_precipitation(latitude=bridge.latitude, longitude=bridge.longitude)
 
     summed_data = [0]
     for i, rain in enumerate(day_rain):
         if i > 0:
             summed_data.append(summed_data[i - 1] + rain)
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=hour_time + day_time,
-                         y=hour_rain + day_rain,
-                         #marker=dict(line=dict(width=20)),
-                         name="Daily Precipitation"
-                         ))
+    if len(day_rain) > 0:
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=hour_time + day_time,
+                             y=hour_rain + day_rain,
+                             #marker=dict(line=dict(width=20)),
+                             name="Daily Precipitation"
+                             ))
 
-    fig.add_trace(go.Scatter(x=day_time,
-                             y=summed_data,
-                             line=dict(width=3),
-                             name="Cumulative Precipitation"))
+        fig.add_trace(go.Scatter(x=day_time,
+                                 y=summed_data,
+                                 line=dict(width=3),
+                                 name="Cumulative Precipitation"))
 
-    fig.update_layout(yaxis=dict(title="Precipitation [mm]"),
-                      title=dict(text="Precipitation Forecast for " + bridge_name,
-                                 x=0.5), )
+        fig.update_layout(yaxis=dict(title="Precipitation [mm]"),
+                          title=dict(text="Precipitation Forecast for " + bridge_name,
+                                     x=0.5), )
 
-    fig.update_layout(config.PLOT_LAYOUT)
+        fig.update_layout(config.PLOT_LAYOUT)
+    else:
+        fig = {"layout": {
+            "xaxis": {
+                "visible": False
+            },
+            "yaxis": {
+                "visible": False
+            },
+            "annotations": [
+                {
+                    "text": "There is no rain in the forecast",
+                    "xref": "paper",
+                    "yref": "paper",
+                    "showarrow": False,
+                    "font": {
+                        "size": 20
+                    }
+                }
+            ]
+        }
+    }
     return fig

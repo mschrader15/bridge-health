@@ -2,7 +2,8 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_html_components as html
 from index import app
 from dashboard.plots import geo_located_bridges, individual_trace, get_bridges_status_plot, geo_located_bridge_sensor, \
-    individual_weather, geo_located_bridges_excel, geo_located_bridge_sensor_excel
+    individual_weather, geo_located_bridges_excel, geo_located_bridge_sensor_excel, individual_trace_excel, \
+    individual_weather_excel, get_bridges_status_plot_excel
 
 
 class ClickMonitor():
@@ -128,7 +129,7 @@ def apply_callback(session):
             except KeyError:
                 return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(last_n_clicks)]))
             if bridge_name != last_bridge_name:
-                fig = individual_trace(session, bridge_name=bridge_name, measurement=['Gage height, ft'])
+                fig = individual_trace_excel(session, bridge_name=bridge_name, measurement=['Gage height, ft'])
                 output_dict = fig.to_dict()
                 return dict(data=output_dict['data'], layout=output_dict['layout']), html.P(
                     "-".join([bridge_name, str(n_clicks)]))
@@ -158,7 +159,7 @@ def apply_callback(session):
             except KeyError:
                 return EMPTY_PLOT, html.P("-".join([last_bridge_name, str(last_n_clicks)]))
             if bridge_name != last_bridge_name:
-                return individual_weather(session, bridge_name=bridge_name), html.P(
+                return individual_weather_excel(session, bridge_name=bridge_name), html.P(
                     "-".join([bridge_name, str(n_clicks)]))
         if reset_button:
             if n_clicks > last_n_clicks:
@@ -172,4 +173,4 @@ def apply_callback(session):
     )
     def update_status(url):
         if url:
-            return get_bridges_status_plot(session)
+            return get_bridges_status_plot_excel(session)

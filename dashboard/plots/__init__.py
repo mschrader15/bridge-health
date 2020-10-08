@@ -1,3 +1,3 @@
 from .bridge_display import geo_located_bridges, geo_located_bridge_sensor, geo_located_bridges_excel, geo_located_bridge_sensor_excel
-from .individual import individual_trace, individual_weather
-from .kpis import get_bridges_status_plot
+from .individual import individual_trace, individual_weather, individual_trace_excel, individual_weather_excel
+from .kpis import get_bridges_status_plot, get_bridges_status_plot_excel
