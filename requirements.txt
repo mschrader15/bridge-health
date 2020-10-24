@@ -9,3 +9,4 @@ plotly
 alembic
 gunicorn
 pyodbc
+selenium
